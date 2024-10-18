@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  accounts      Account[]
+  sessions      Session[]
+  isMentor      Boolean   @default(false)
+  title         String?
+  bio           String?
+  profileStrength Int     @default(0)
+  services      Service[]
+  products      Product[]
+  subscriptions Subscription[]
+  bookings      Booking[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Service {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  price       Float
+  duration    Int
+  type        String
+  mentorId    String
+  mentor      User     @relation(fields: [mentorId], references: [id])
+  bookings    Booking[]
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  price       Float
+  type        String
+  creatorId   String
+  creator     User     @relation(fields: [creatorId], references: [id])
+}
+
+model Subscription {
+  id       String   @id @default(cuid())
+  name     String
+  price    Float
+  interval String
+  mentorId String
+  mentor   User     @relation(fields: [mentorId], references: [id])
+}
+
+model Booking {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  mentorId  String
+  mentor    User     @relation("MentorBookings", fields: [mentorId], references: [id])
+  serviceId String
+  service   Service  @relation(fields: [serviceId], references: [id])
+  dateTime  DateTime
+  status    String   @default("pending")
+}
